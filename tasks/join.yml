@@ -1,0 +1,16 @@
+- name: Fetch join_command
+  copy:
+    src: /srv/join-command
+    dest: /srv/join-command
+  tags: join  
+
+- name: join cluster
+  command: sh /srv/join-command
+  tags: join
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: $HOME/.kube/config
+    remote_src: yes
+  tags: join  

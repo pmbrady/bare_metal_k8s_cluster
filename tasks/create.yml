@@ -1,0 +1,53 @@
+- name: Initialise the Control Plane Node
+  command: kubeadm init --pod-network-cidr 10.244.0.0/16 --control-plane-endpoint "{{ haproxy_fqdn }}:6443" --upload-certs 
+  tags: kube_init  
+
+- name: copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: $HOME/.kube/config
+    remote_src: yes
+  tags: kube_adm  
+
+- name: copy calico file
+  copy: 
+    src: files/calico.yml
+    dest: /srv/calico.yml
+  tags: kube_pod    
+
+- name: install Pod network
+  shell: kubectl apply -f /srv/calico.yml >> pod_network_setup.txt
+  tags: kube_pod  
+
+- name: Generate join command
+  shell: kubeadm token create --print-join-command > /srv/join-command
+  tags: join
+
+- name: Generate certificate key
+  shell: kubeadm init phase upload-certs --upload-certs >> /srv/join-command
+  tags: join
+
+- name: Replace line in join command
+  lineinfile:
+    path: /srv/join-command
+    regexp: 'Storing'
+    line: "--control-plane --certificate-key "
+  tags: join  
+
+- name: Remove unneeded line in join command
+  lineinfile:
+    path: /srv/join-command
+    regexp: 'Using'
+    state: absent
+  tags: join  
+
+- name: Remove line breakes in join command
+  shell: tr --delete '\n' < /srv/join-command > /srv/join-command
+  tags: join
+
+- name: Fetch join_command
+  fetch:
+    src: /srv/join-command
+    dest: /srv/join-command
+    flat: yes
+  tags: join

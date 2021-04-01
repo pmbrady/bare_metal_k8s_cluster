@@ -1,0 +1,51 @@
+---
+- name: make k8s/docker use systemd crgoup
+  copy:
+    src: "files/{{ item.src }}"
+    dest: "{{ item.dest }}" 
+  loop: 
+    - { dest: '/usr/lib/systemd/system/kubelet.service', src: 'kubelet.service' }
+    - { dest: '/etc/docker/daemon.json', src: 'daemon.json' }
+  tags: crgoup_driver
+
+- name: Reboot the server
+  reboot:
+
+- name: Make sure docker/kubernetes are running
+  systemd:
+    state: started
+    name: "{{ item }}"
+    daemon_reload: yes
+    enabled: yes
+  loop:
+    - docker
+    - kubelet  
+  tags: services  
+
+- name: Upgrade pip  
+  pip:
+    name: pip
+    state: latest
+  tags: python 
+
+- name: Upgrade setuptools  
+  pip:
+    name: setuptools
+    state: latest
+  tags: python 
+
+- name: install openshift
+  pip:
+    name: openshift
+    extra_args: --ignore-installed PyYAML
+  tags: python  
+  
+- include: ./create.yml
+  when: group_names | select('search','k8s_initial') | list | count > 0
+
+- include: ./join.yml
+  when: group_names | select('search','k8s_other') | list | count > 0
+
+- include: ./worker.yml
+
+- include: ./ingress_contoller.yml

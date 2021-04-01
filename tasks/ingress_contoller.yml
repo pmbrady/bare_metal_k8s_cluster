@@ -1,0 +1,43 @@
+- name: copy ingress-nginx files
+  copy:
+    src: files/{{ item }}
+    dest: /srv/
+  loop: "{{ ingress_nginx_files }}"
+  tags: ingress
+
+- name: Install ingress controller
+  k8s:
+    state: present
+    src: /srv/{{ item }}
+  loop: "{{ ingress_nginx_files }}"
+  tags: ingress
+
+- name: Get ingress-nginx config
+  shell: kubectl -n ingress-nginx get service ingress-nginx -o yaml > /srv/ingress-nginx.yml
+  tags: ingress
+
+- name: Add externalIPs
+  blockinfile:
+    marker: ""
+    path: /srv/ingress-nginx.yml
+    insertafter: "clusterIP"
+    content: |2
+        externalIPs:
+        - {{ k8s_ips }}
+  run_once: true
+  tags: ingress
+
+- name: Remove blank lines blockinfile put in
+  lineinfile :
+    path: /srv/ingress-nginx.yml
+    state: absent
+    regexp: '^$'
+  tags: ingress
+
+- name: Apply ingress-nginx.yml
+  k8s:
+    state: present
+    force: yes
+    src: /srv/ingress-nginx.yml
+  run_once: true
+  tags: ingress

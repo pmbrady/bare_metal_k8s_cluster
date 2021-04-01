@@ -1,0 +1,6 @@
+kafka_brokers: []
+calico_url: docs.projectcalico.org/v3.9/manifests/calico.yaml
+helm_binary_location: https://get.helm.sh/helm-v3.2.1-linux-amd64.tar.gz
+ingress_nginx_files:
+  - mandatory.yaml
+  - service-nodeport.yaml

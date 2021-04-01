@@ -1,0 +1,14 @@
+- name: Change label
+  command: "kubectl label node {{ inventory_hostname }} node-short-name={{ inventory_hostname }} --overwrite"
+  tags: worker
+
+- name: Change label
+  command: "kubectl label node {{ inventory_hostname }} istio=enabled"
+  tags: 
+    - worker
+    - istio
+
+- name: taint nodes
+  command: kubectl taint nodes --all node-role.kubernetes.io/master-
+  run_once: true
+  tags: worker
