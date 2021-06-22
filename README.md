@@ -1,6 +1,6 @@
 This ansible role will create a K8s cluster on bare metal or VMs with Centos as the OS. You can have any number of nodes you like.
 
-Each node in the cluster will act as a control plane and workers.
+Each node in the cluster will act as a control plane and worker.
 
 To run the role you will need to define your nodes like so
 
